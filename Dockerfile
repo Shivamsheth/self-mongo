@@ -17,7 +17,7 @@ COPY . .
 # 4. Install MongoDB driver and dependencies
 # ----------------------------
 RUN apk add --no-cache autoconf g++ make openssl-dev && \
-    pecl install mongodb-2.2.0 && \
+    pecl install mongodb-2.1.4 && \
     echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini && \
     php -m | grep mongodb && \
     composer install --no-dev --optimize-autoloader && \
