@@ -17,11 +17,15 @@ COPY . .
 # 4. Install MongoDB driver and dependencies
 # ----------------------------
 RUN apk add --no-cache autoconf g++ make openssl-dev && \
-    pecl install mongodb && \
-    docker-php-ext-enable mongodb && \
+    pecl install mongodb-2.2.0 && \
+    echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongodb.ini && \
+    php -m | grep mongodb && \
     composer install --no-dev --optimize-autoloader && \
+    php artisan config:clear && \
     php artisan config:cache && \
     php artisan route:cache
+
+
 
 # ----------------------------
 # 5. Expose Render port
