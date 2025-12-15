@@ -20,13 +20,16 @@ COPY . .
 # --------------------------------------
 # 4️⃣ Install system dependencies + MongoDB driver
 # --------------------------------------
+# 5️⃣ Install latest MongoDB extension + optimize Laravel
 RUN apk add --no-cache autoconf g++ make openssl-dev && \
-    pecl install mongodb && \
+    pecl install mongodb-1.21.3 && \
     docker-php-ext-enable mongodb && \
     composer install --no-dev --optimize-autoloader && \
+    php artisan config:clear && \
     php artisan config:cache && \
     php artisan route:cache && \
     chmod -R 775 storage bootstrap/cache
+
 
 # --------------------------------------
 # 5️⃣ Environment variables (for Render)
