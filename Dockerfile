@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     docker-php-ext-install pdo pdo_mysql zip bcmath
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # ----------------------------
 # STEP 2 — Copy project files
@@ -20,7 +20,7 @@ COPY . .
 # ----------------------------
 # STEP 3 — Install dependencies
 # ----------------------------
-RUN composer install --optimize-autoloader --no-dev
+RUN composer install 
 RUN composer require mongodb/laravel-mongodb
 
 # ----------------------------
