@@ -1,5 +1,5 @@
 # --------------------------------------
-# 1️⃣ Base image: PHP + Nginx + Composer
+# 1️⃣ Base image: PHP 8.3 + Nginx + Composer
 # --------------------------------------
 FROM richarvey/nginx-php-fpm:latest
 
@@ -9,35 +9,33 @@ FROM richarvey/nginx-php-fpm:latest
 WORKDIR /var/www/html
 
 # --------------------------------------
-# 3️⃣ Copy project files into the container
+# 3️⃣ Copy project files first
 # --------------------------------------
-COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader
-
-
 COPY . .
 
 # --------------------------------------
-# 4️⃣ Install system dependencies + MongoDB driver
+# 4️⃣ Install latest MongoDB PHP extension (before Composer)
 # --------------------------------------
-# 5️⃣ Install latest MongoDB extension + optimize Laravel
 RUN apk add --no-cache autoconf g++ make openssl-dev && \
     pecl install mongodb-1.21.3 && \
-    docker-php-ext-enable mongodb && \
-    composer install --no-dev --optimize-autoloader && \
+    docker-php-ext-enable mongodb
+
+# --------------------------------------
+# 5️⃣ Install PHP dependencies
+# --------------------------------------
+RUN composer install --no-dev --optimize-autoloader --prefer-dist && \
     php artisan config:clear && \
     php artisan config:cache && \
     php artisan route:cache && \
     chmod -R 775 storage bootstrap/cache
 
-
 # --------------------------------------
-# 5️⃣ Environment variables (for Render)
+# 6️⃣ Render requires listening on port 10000
 # --------------------------------------
 ENV PORT=10000
 EXPOSE 10000
 
 # --------------------------------------
-# 6️⃣ Start Laravel app (Render auto-maps to port 10000)
+# 7️⃣ Start Laravel server
 # --------------------------------------
 CMD php artisan serve --host=0.0.0.0 --port=${PORT}
