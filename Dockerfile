@@ -1,41 +1,30 @@
-# --------------------------------------
-# 1️⃣ Base image: PHP 8.3 + Nginx + Composer
-# --------------------------------------
-FROM richarvey/nginx-php-fpm:latest
+# ----------------------------
+# STEP 1 — Base PHP + Composer + Extensions
+# ----------------------------
+FROM php:8.3-cli
 
-# --------------------------------------
-# 2️⃣ Set working directory
-# --------------------------------------
-WORKDIR /var/www/html
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev zip curl && \
+    docker-php-ext-install pdo pdo_mysql zip bcmath
 
-# --------------------------------------
-# 3️⃣ Copy project files first
-# --------------------------------------
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# ----------------------------
+# STEP 2 — Copy project files
+# ----------------------------
+WORKDIR /app
 COPY . .
 
-# --------------------------------------
-# 4️⃣ Install latest MongoDB PHP extension (before Composer)
-# --------------------------------------
-RUN apk add --no-cache autoconf g++ make openssl-dev && \
-    pecl install mongodb-1.21.3 && \
-    docker-php-ext-enable mongodb
+# ----------------------------
+# STEP 3 — Install dependencies
+# ----------------------------
+RUN composer install --optimize-autoloader --no-dev
+RUN composer require mongodb/laravel-mongodb
 
-# --------------------------------------
-# 5️⃣ Install PHP dependencies
-# --------------------------------------
-RUN composer install --no-dev --optimize-autoloader --prefer-dist && \
-    php artisan config:clear && \
-    php artisan config:cache && \
-    php artisan route:cache && \
-    chmod -R 775 storage bootstrap/cache
-
-# --------------------------------------
-# 6️⃣ Render requires listening on port 10000
-# --------------------------------------
-ENV PORT=10000
+# ----------------------------
+# STEP 4 — Expose and start Laravel
+# ----------------------------
 EXPOSE 10000
-
-# --------------------------------------
-# 7️⃣ Start Laravel server
-# --------------------------------------
-CMD php artisan serve --host=0.0.0.0 --port=${PORT}
+CMD php artisan serve --host=0.0.0.0 --port=10000
