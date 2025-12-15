@@ -1,29 +1,34 @@
 # ----------------------------
-# STEP 1 — Base PHP + Composer + Extensions
+# 1. Use a PHP image with FPM
 # ----------------------------
-FROM php:8.3-cli
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git unzip libzip-dev libpng-dev libonig-dev libxml2-dev zip curl && \
-    docker-php-ext-install pdo pdo_mysql zip bcmath
-
-# Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+FROM richarvey/nginx-php-fpm:latest
 
 # ----------------------------
-# STEP 2 — Copy project files
+# 2. Set working directory
 # ----------------------------
-WORKDIR /app
+WORKDIR /var/www/html
+
+# ----------------------------
+# 3. Copy project files
+# ----------------------------
 COPY . .
 
 # ----------------------------
-# STEP 3 — Install dependencies
+# 4. Install MongoDB driver and dependencies
 # ----------------------------
-RUN composer install --optimize-autoloader --no-dev
+RUN apk add --no-cache autoconf g++ make openssl-dev && \
+    pecl install mongodb && \
+    docker-php-ext-enable mongodb && \
+    composer install --no-dev --optimize-autoloader && \
+    php artisan config:cache && \
+    php artisan route:cache
 
 # ----------------------------
-# STEP 4 — Expose and start Laravel
+# 5. Expose Render port
 # ----------------------------
 EXPOSE 10000
+
+# ----------------------------
+# 6. Start Laravel server
+# ----------------------------
 CMD php artisan serve --host=0.0.0.0 --port=10000
